@@ -2,6 +2,9 @@ import sys
 from time import sleep
 from elasticsearch import Elasticsearch
 import requests
+import logging
+
+logger = logging.getLogger(__name__)
 
 def create_index(es_object, index_name):
     created = False
@@ -58,10 +61,10 @@ def create_index(es_object, index_name):
         if not es_object.indices.exists(index_name):
             # Ignore 400 means to ignore "Index Already Exist" error.
             es_object.indices.create(index=index_name, ignore=400, body=settings)
-            print(f"Created index {index_name}")
+            logger.info(f"Created index {index_name}")
         created = True
     except Exception as ex:
-        print(str(ex))
+        logger.critical(str(ex))
     finally:
         return created
 
@@ -83,14 +86,14 @@ def get_record(id):
     return None, None
 
 if __name__ == '__main__':
-    
+    #TODO: Use argparser and make this available on CLI
     if len(sys.argv) < 5:
         print("Usage: python kzcontinue.py <ip> <port> <index> <start_id>")
         exit()
 
     start = int(sys.argv[4])
     es = Elasticsearch(hosts=[{'host': sys.argv[1], 'port': int(sys.argv[2])}])
-    print(es.info())
+    logger.info(es.info())
 
     if es is not None:
         if create_index(es, 'kzapi'):
@@ -99,6 +102,6 @@ if __name__ == '__main__':
                 start += 1
                 if rec is not None:
                     out = es.index(index=sys.argv[3], body=rec, id=idx)
-                    print(f"Data indexed successfully for run #{idx}")
+                    logger.info(f"Data indexed successfully for run #{idx}")
     else:
-        print(f"Cannot retrieve data from {sys.argv[1]}:{sys.argv[2]}")
+        logger.error(f"Cannot retrieve data from {sys.argv[1]}:{sys.argv[2]}")

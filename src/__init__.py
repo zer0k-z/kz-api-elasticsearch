@@ -1,0 +1,1 @@
+from kzcontinue import create_index, get_record
