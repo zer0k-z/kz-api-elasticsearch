@@ -2,6 +2,10 @@ import sys
 from time import sleep
 from elasticsearch import Elasticsearch
 import requests
+import logging
+import argparse
+
+logger = logging.getLogger(__name__)
 
 def create_index(es_object, index_name):
     created = False
@@ -58,10 +62,10 @@ def create_index(es_object, index_name):
         if not es_object.indices.exists(index_name):
             # Ignore 400 means to ignore "Index Already Exist" error.
             es_object.indices.create(index=index_name, ignore=400, body=settings)
-            print(f"Created index {index_name}")
+            logger.info(f"Created index {index_name}")
         created = True
     except Exception as ex:
-        print(str(ex))
+        logger.critical(str(ex))
     finally:
         return created
 
@@ -82,15 +86,21 @@ def get_record(id):
 
     return None, None
 
-if __name__ == '__main__':
-    
-    if len(sys.argv) < 5:
-        print("Usage: python kzcontinue.py <ip> <port> <index> <start_id>")
-        exit()
+def main():
 
-    start = int(sys.argv[4])
-    es = Elasticsearch(hosts=[{'host': sys.argv[1], 'port': int(sys.argv[2])}])
-    print(es.info())
+    parser = argparse.ArgumentParser(prog='kzcontinue', description='Continuously upload kz records to an elastic node')
+    
+    parser.add_argument('ip')
+    parser.add_argument('port')
+    parser.add_argument('index')
+    parser.add_argument('start_id')
+    parser.add_argument('--version', action='version', version='0.0.1')
+
+    args = parser.parse_args()
+
+    start = int(args.start_id)
+    es = Elasticsearch(hosts=[{'host': args.ip, 'port': int(args.port)}])
+    logger.info(es.info())
 
     if es is not None:
         if create_index(es, 'kzapi'):
@@ -98,7 +108,7 @@ if __name__ == '__main__':
                 idx, rec = get_record(start)
                 start += 1
                 if rec is not None:
-                    out = es.index(index=sys.argv[3], body=rec, id=idx)
-                    print(f"Data indexed successfully for run #{idx}")
+                    out = es.index(index=args.index, body=rec, id=idx)
+                    logger.info(f"Data indexed successfully for run #{idx}")
     else:
-        print(f"Cannot retrieve data from {sys.argv[1]}:{sys.argv[2]}")
+        logger.error(f"Cannot retrieve data from {args.ip}:{args.port}")
