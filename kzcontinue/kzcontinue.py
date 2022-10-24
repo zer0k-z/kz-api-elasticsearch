@@ -1,4 +1,3 @@
-import sys
 from time import sleep
 from elasticsearch import Elasticsearch
 import requests
@@ -6,6 +5,9 @@ import logging
 import argparse
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+console = logging.StreamHandler()
+logger.addHandler(console)
 
 def create_index(es_object, index_name):
     created = False
@@ -87,7 +89,6 @@ def get_record(id):
     return None, None
 
 def main():
-
     parser = argparse.ArgumentParser(prog='kzcontinue', description='Continuously upload kz records to an elastic node')
     
     parser.add_argument('ip')
