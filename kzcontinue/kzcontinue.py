@@ -71,6 +71,8 @@ def create_index(es_object, index_name):
     finally:
         return created
 
+PROP_TO_GET = ['steamid64', 'server_name', 'created_on', 'stage', 'mode', 'tickrate', 'time', 'teleports', 'points', 'replay_id', 'map_name']
+
 def get_record(id):
     for _ in range(10):
 
@@ -80,12 +82,14 @@ def get_record(id):
             if line_json is None:
                 return None, None
             id = line_json['id']
-            rec = {'steamid64': line_json['steamid64'], 'server': line_json['server_name'], 'created_on': line_json['created_on'], 'stage': line_json['stage'], 'mode': line_json['mode'], 
-                'tickrate': line_json['tickrate'], 'time': line_json['time'], 'teleports': line_json['teleports'], 'points': line_json['points'], 'replay_id': line_json['replay_id'], 'map_name':line_json['map_name']}
-            sleep(0.6)
+            rec = {}
+            #TODO: Improve the method of getting props below
+            for prop in PROP_TO_GET:
+                rec[prop] = line_json[prop]
             return id, rec
         sleep(0.7)
 
+    logger.debug(f"Cannot get record from id {id}")
     return None, None
 
 def main():
