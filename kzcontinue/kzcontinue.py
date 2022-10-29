@@ -5,9 +5,9 @@ import logging
 import argparse
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-console = logging.StreamHandler()
-logger.addHandler(console)
+logger.setLevel(logging.DEBUG)
+hd = logging.StreamHandler()
+logger.addHandler(hd)
 
 def create_index(es_object, index_name):
     created = False
@@ -71,6 +71,8 @@ def create_index(es_object, index_name):
     finally:
         return created
 
+PROP_TO_GET = ['steamid64', 'server_name', 'created_on', 'stage', 'mode', 'tickrate', 'time', 'teleports', 'points', 'replay_id', 'map_name']
+
 def get_record(id):
     for _ in range(10):
 
@@ -80,12 +82,14 @@ def get_record(id):
             if line_json is None:
                 return None, None
             id = line_json['id']
-            rec = {'steamid64': line_json['steamid64'], 'server': line_json['server_name'], 'created_on': line_json['created_on'], 'stage': line_json['stage'], 'mode': line_json['mode'], 
-                'tickrate': line_json['tickrate'], 'time': line_json['time'], 'teleports': line_json['teleports'], 'points': line_json['points'], 'replay_id': line_json['replay_id'], 'map_name':line_json['map_name']}
-            sleep(0.6)
+            rec = {}
+            #TODO: Improve the method of getting props below
+            for prop in PROP_TO_GET:
+                rec[prop] = line_json[prop]
             return id, rec
         sleep(0.7)
 
+    logger.debug(f"Cannot get record from id {id}")
     return None, None
 
 def main():
@@ -96,9 +100,18 @@ def main():
     parser.add_argument('index')
     parser.add_argument('start_id')
     parser.add_argument('--version', action='version', version='0.0.1')
+    parser.add_argument('--verbose', '-v')
 
     args = parser.parse_args()
 
+    if hasattr(parser, 'verbose'):
+        verbosiy_level = parser.verbose
+        try:
+            verbosiy_level = int(verbosiy_level)
+        except ValueError:
+            verbosiy_level = verbosiy_level.upper()
+        hd.setLevel(verbosity_level)
+    
     start = int(args.start_id)
     es = Elasticsearch(hosts=[{'host': args.ip, 'port': int(args.port)}])
     logger.info(es.info())
