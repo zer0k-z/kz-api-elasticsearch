@@ -3,6 +3,7 @@ from elasticsearch import Elasticsearch
 import requests
 import logging
 import argparse
+import time
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -87,7 +88,8 @@ def get_record(id):
             for prop in PROP_TO_GET:
                 rec[prop] = line_json[prop]
             return id, rec
-        sleep(0.7)
+        # Conservative request limit at 60/minute to not get 429'd.
+        sleep(1)
 
     logger.debug(f"Cannot get record from id {id}")
     return None, None
@@ -101,15 +103,20 @@ def main():
     parser.add_argument('start_id')
     parser.add_argument('--version', action='version', version='0.0.1')
     parser.add_argument('--verbose', '-v')
+    parser.add_argument('--timeout', type=int)
 
     args = parser.parse_args()
+    if not args.timeout:
+        timeout = 600
+    else:
+        timeout = args.timeout
 
     if hasattr(parser, 'verbose'):
-        verbosiy_level = parser.verbose
+        verbosity_level = parser.verbose
         try:
-            verbosiy_level = int(verbosiy_level)
+            verbosity_level = int(verbosity_level)
         except ValueError:
-            verbosiy_level = verbosiy_level.upper()
+            verbosity_level = verbosity_level.upper()
         hd.setLevel(verbosity_level)
     
     start = int(args.start_id)
@@ -117,12 +124,39 @@ def main():
     logger.info(es.info())
 
     if es is not None:
-        if create_index(es, 'kzapi'):
-            while True:
+        if create_index(es, args.index):
+            success = False
+            last_success_time = time.time()
+            while (time.time() - last_success_time) < timeout:
                 idx, rec = get_record(start)
-                start += 1
+                success = False
                 if rec is not None:
-                    out = es.index(index=args.index, body=rec, id=idx)
+                    start += 1
+                    es.index(index=args.index, body=rec, id=idx)
                     logger.info(f"Data indexed successfully for run #{idx}")
+                    success = True
+                    last_success_time = time.time()
+                else:
+                    # Look for a few runs ahead, just in case we encounter a null run instead of a run that doesn't exist yet
+                    for i in range(1,5):
+                        idx, rec = get_record(start+i)
+                        if rec is not None:
+                            es.index(index=args.index, body=rec, id=idx)
+                            logger.info(f"Data indexed successfully for run #{idx}")
+                            success = True
+                            last_success_time = time.time()
+                            # Double check the past runs to really make sure it is a null run 
+                            # and wasn't created while we send the last few requests.
+                            for i in range(0,i):
+                                idx, rec = get_record(start)
+                                if rec is not None:
+                                    es.index(index=args.index, body=rec, id=idx)
+                                    logger.info(f"Data indexed successfully for run #{idx}")
+                            start += i
+                            break
+                # No run in sight, pause for 1 minute.
+                if not success:
+                    sleep(60)
+            logger.error(f"API is unresponsive, shutting down. Last runID: {start}")
     else:
         logger.error(f"Cannot retrieve data from {args.ip}:{args.port}")
