@@ -1,9 +1,11 @@
-from time import sleep
-from elasticsearch import Elasticsearch
-import requests
-import logging
 import argparse
+import logging
 import time
+from time import sleep
+
+import requests
+
+from elasticsearch import Elasticsearch
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -97,10 +99,8 @@ def get_record(id):
 def main():
     parser = argparse.ArgumentParser(prog='kzcontinue', description='Continuously upload kz records to an elastic node')
     
-    parser.add_argument('ip')
-    parser.add_argument('port')
+    parser.add_argument('url')
     parser.add_argument('index')
-    parser.add_argument('start_id')
     parser.add_argument('--version', action='version', version='0.0.1')
     parser.add_argument('--verbose', '-v')
     parser.add_argument('--timeout', type=int)
@@ -119,12 +119,18 @@ def main():
             verbosity_level = verbosity_level.upper()
         hd.setLevel(verbosity_level)
     
-    start = int(args.start_id)
-    es = Elasticsearch(hosts=[{'host': args.ip, 'port': int(args.port)}])
+    
+    es = Elasticsearch(hosts=[args.url])
     logger.info(es.info())
 
     if es is not None:
         if create_index(es, args.index):
+            start = 0
+            try:
+                resp = es.search(index=args.index,size=1,sort=[{'created_on':{'order':'desc'}}])
+                start = int(resp['hits']['hits'][0]['_id']) + 1
+            except:
+                pass
             success = False
             last_success_time = time.time()
             while (time.time() - last_success_time) < timeout:
