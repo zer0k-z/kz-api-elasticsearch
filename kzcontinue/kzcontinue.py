@@ -39,7 +39,7 @@ def create_index(es_object, index_name):
                     "replay_id" : {
                         "type" : "long"
                     },
-                    "server" : {
+                    "server_name" : {
                         "type" : "text"
                     },
                     "stage" : {
@@ -76,7 +76,7 @@ def create_index(es_object, index_name):
     finally:
         return created
 
-PROP_TO_GET = ['steamid64', 'server_name', 'created_on', 'stage', 'mode', 'tickrate', 'time', 'teleports', 'points', 'replay_id', 'map_name']
+PROP_TO_GET = ['steamid64', 'server_name', 'created_on', 'stage', 'mode', 'tickrate', 'time', 'teleports', 'map_name']
 
 def get_record(id):
     for _ in range(10):
@@ -103,7 +103,7 @@ def main():
     
     parser.add_argument('url')
     parser.add_argument('index')
-    parser.add_argument('--version', action='version', version='0.0.2')
+    parser.add_argument('--version', action='version', version='0.0.3')
     parser.add_argument('--verbose', '-v')
     parser.add_argument('--timeout', type=int)
 
