@@ -100,7 +100,7 @@ def main():
     
     parser.add_argument('url')
     parser.add_argument('index')
-    parser.add_argument('--version', action='version', version='0.0.1')
+    parser.add_argument('--version', action='version', version='0.0.2')
     parser.add_argument('--verbose', '-v')
     parser.add_argument('--timeout', type=int)
 
