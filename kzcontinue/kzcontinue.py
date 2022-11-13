@@ -126,7 +126,7 @@ def main():
         if create_index(es, args.index):
             start = 0
             try:
-                resp = es.search(index=args.index,size=1, sort='created_on:desc')
+                resp = es.search(index=args.index,size=1, sort=[{"created_on":{"order":"desc"}}])
                 start = int(resp['hits']['hits'][0]['_id']) + 1
                 logger.info(f"Latest index: #{start - 1}")
             except Exception as e:
