@@ -5,6 +5,6 @@ Clone this repo then
 `cd kz-api-elasticsearch`
 `pip install -e .` or `pip3 install -e .`
 
-Usage: `kzcontinue <ip> <port> <index> <start_id>`
+Usage: `kzcontinue <url> <index>`
 
-(single threaded, no proper rate limit, no auth, no handling of non existent future runs)
+(single threaded, no proper rate limit)
