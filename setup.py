@@ -12,6 +12,6 @@ setup(
                 'kzcontinue = kzcontinue.kzcontinue:main'
             ]
     },
-    install_requires=["elasticsearch", "requests"],
+    install_requires=["elasticsearch:7.17.7", "requests"],
     zip_safe=False,
 )
