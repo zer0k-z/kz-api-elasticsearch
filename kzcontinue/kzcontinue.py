@@ -17,11 +17,11 @@ def create_index(es_object, index_name):
     settings = {
         "settings": {
             "number_of_shards": 1,
-            "number_of_replicas": 1
+            "number_of_replicas": 0
         },
         "mappings": {
             "records": {
-                "dynamic": "strict",
+                "dynamic": "true",
                 "properties" : {
                     "created_on" : {
                         "type" : "date",
@@ -39,7 +39,7 @@ def create_index(es_object, index_name):
                     "replay_id" : {
                         "type" : "long"
                     },
-                    "server_name" : {
+                    "server" : {
                         "type" : "text"
                     },
                     "stage" : {
@@ -56,6 +56,9 @@ def create_index(es_object, index_name):
                     },
                     "time" : {
                         "type" : "double"
+                    },
+                    "player_name": {
+                        "type" : "keyword"
                     }
                 }
             }
