@@ -4,7 +4,6 @@ import time
 from time import sleep
 
 import requests
-
 from elasticsearch import Elasticsearch
 
 logger = logging.getLogger(__name__)
@@ -127,9 +126,11 @@ def main():
         if create_index(es, args.index):
             start = 0
             try:
-                resp = es.search(index=args.index,size=1,sort=[{'created_on':{'order':'desc'}}])
+                resp = es.search(index=args.index,size=1, sort='created_on:desc')
                 start = int(resp['hits']['hits'][0]['_id']) + 1
-            except:
+                logger.info(f"Latest index: #{start - 1}")
+            except Exception as e:
+                logger.info(f"Exception: {e}")
                 pass
             success = False
             last_success_time = time.time()
