@@ -17,7 +17,12 @@ def create_query_associate_id(steamid, sname):
         "steamid64.keyword": f"{steamid}"
       }
     },
-    "script" : "ctx._source.player_name = \"{0}\";".format(sname)
+    "script" : {
+      "id": "update-name",
+      "params": {
+          "name": sname
+      }
+    }
   }
   return query
 
@@ -45,6 +50,7 @@ def main():
     
     
     es = Elasticsearch(hosts=[args.url])
+    es.put_script(id="update-name", body='{"script":{"lang":"painless", "source":"ctx._source.player_name = params[\'name\']"}}')
     logger.info(es.info())
     steam_webapi_client = webapi.WebAPI(args.steam_webapi_key)
     resp = es.search(index="kzrecords2", size = 0, body = REQUEST)
@@ -62,7 +68,7 @@ def main():
                 result = (steam_webapi_client.ISteamUser.GetPlayerSummaries(steamids=steamid_query[:-1]))
                 for player in result['response']['players']:
                     logger.info(f"{player['steamid']} - {player['personaname']}")
-                    es.update_by_query(body=create_query_associate_id(player['steamid'],player['personaname']), index=args.index)
+                    logger.info(es.update_by_query(body=create_query_associate_id(player['steamid'],player['personaname']), index=args.index))
             except Exception as e:
                 logger.error(e)
                 break
