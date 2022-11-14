@@ -76,7 +76,7 @@ def create_index(es_object, index_name):
     finally:
         return created
 
-PROP_TO_GET = ['steamid64', 'server_name', 'created_on', 'stage', 'mode', 'tickrate', 'time', 'teleports', 'map_name']
+PROP_TO_GET = ['steamid64', 'server_name', 'created_on', 'stage', 'mode', 'tickrate', 'time', 'teleports', 'map_name', 'player_name']
 
 def get_record(id):
     for _ in range(10):
