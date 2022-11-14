@@ -47,30 +47,37 @@ def main():
         except ValueError:
             verbosity_level = verbosity_level.upper()
         hd.setLevel(verbosity_level)
-    
-    
+
     es = Elasticsearch(hosts=[args.url])
     es.put_script(id="update-name", body='{"script":{"lang":"painless", "source":"ctx._source.player_name = params[\'name\']"}}')
     logger.info(es.info())
     steam_webapi_client = webapi.WebAPI(args.steam_webapi_key)
-    resp = es.search(index="kzrecords2", size = 0, body = REQUEST)
+    resp = es.search(index=args.index, size = 0, body = REQUEST)
 
     if es is not None:
+      while True:
         while 'after_key' in resp['aggregations']['my_buckets']:
-            try:
-                steamid = int(resp['aggregations']['my_buckets']['after_key']['steamid'])
-                resp = es.search(index="kzrecords2", size = 0, body=REQUEST_PAGINATED.replace("REPLACE_STEAM_ID_HERE", str(steamid)))
+          try:
+              steamid = int(resp['aggregations']['my_buckets']['after_key']['steamid'])
+              resp = es.search(index=args.index, size = 0, body=REQUEST_PAGINATED.replace("REPLACE_STEAM_ID_HERE", str(steamid)))
 
-                steamid_query = ""
-                for entry in resp['aggregations']['my_buckets']['buckets']:
-                    steamid_query = steamid_query + entry['key']['steamid'] + ","
-                
-                result = (steam_webapi_client.ISteamUser.GetPlayerSummaries(steamids=steamid_query[:-1]))
-                for player in result['response']['players']:
-                    logger.info(f"{player['steamid']} - {player['personaname']}")
-                    logger.info(es.update_by_query(body=create_query_associate_id(player['steamid'],player['personaname']), index=args.index))
-            except Exception as e:
-                logger.error(e)
-                break
+              steamid_query = ""
+              for entry in resp['aggregations']['my_buckets']['buckets']:
+                  steamid_query = steamid_query + entry['key']['steamid'] + ","
+              for _ in range(0,10):
+                while True:
+                    try:
+                        result = (steam_webapi_client.ISteamUser.GetPlayerSummaries(steamids=steamid_query[:-1]))
+                    except:
+                        sleep(1)
+                        continue
+                    break
+              for player in result['response']['players']:
+                  logger.info(f"{player['steamid']} - {player['personaname']}")
+                  es.update_by_query(body=create_query_associate_id(player['steamid'],player['personaname']), index=args.index)
+          except Exception as e:
+              logger.error(e)
+              break
         sleep(86400)
+        resp = es.search(index=args.index, size = 0, body = REQUEST)
 
