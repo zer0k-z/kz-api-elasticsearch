@@ -148,7 +148,7 @@ def main():
                     last_success_time = time.time()
                 else:
                     # Look for a few runs ahead, just in case we encounter a null run instead of a run that doesn't exist yet
-                    for i in range(1,5):
+                    for i in range(1,25):
                         idx, rec = get_record(start+i)
                         if rec is not None:
                             es.index(index=args.index, body=rec, id=idx)
