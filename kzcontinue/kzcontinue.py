@@ -97,7 +97,7 @@ def get_record(id):
         # Conservative request limit at 60/minute to not get 429'd.
         sleep(1)
 
-    logger.debug(f"Cannot get record from id {id}")
+    logger.debug(f"Cannot get record from id {id}, status code {resp.status_code}, content {resp.json()}")
     return None, None
 
 def main():
