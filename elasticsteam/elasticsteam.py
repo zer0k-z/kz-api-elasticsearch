@@ -36,7 +36,7 @@ def main():
     parser.add_argument('index')
     parser.add_argument('steam_webapi_key')
     parser.add_argument('--verbose', '-v')
-    parser.add_argument('--version', action='version', version='0.0.3')
+    parser.add_argument('--version', action='version', version='0.0.4')
 
     args = parser.parse_args()
 

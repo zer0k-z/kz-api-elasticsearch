@@ -8,7 +8,9 @@ from elasticsearch import Elasticsearch
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(message)s')
 hd = logging.StreamHandler()
+hd.setFormatter(formatter)
 logger.addHandler(hd)
 
 def create_index(es_object, index_name):
@@ -103,7 +105,7 @@ def main():
     
     parser.add_argument('url')
     parser.add_argument('index')
-    parser.add_argument('--version', action='version', version='0.0.3')
+    parser.add_argument('--version', action='version', version='0.0.4')
     parser.add_argument('--verbose', '-v')
     parser.add_argument('--timeout', type=int)
 
@@ -157,8 +159,8 @@ def main():
                             last_success_time = time.time()
                             # Double check the past runs to really make sure it is a null run 
                             # and wasn't created while we send the last few requests.
-                            for i in range(0,i):
-                                idx, rec = get_record(start)
+                            for j in range(0,i):
+                                idx, rec = get_record(start+j)
                                 if rec is not None:
                                     es.index(index=args.index, body=rec, id=idx)
                                     logger.info(f"Data indexed successfully for run #{idx}")
