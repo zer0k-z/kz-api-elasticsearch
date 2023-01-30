@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="kz-api-elasticsearch",
-    version="0.0.5",
+    version="0.0.6",
     author="zer0k-z",
     packages=find_packages(),
     license="MIT",

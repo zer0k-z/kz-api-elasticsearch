@@ -87,18 +87,21 @@ def get_record(id):
     for _ in range(10):
         # Conservative request limit at 100/minute to not get 429'd.
         sleep(0.6)
-        resp = requests.get(f"https://kztimerglobal.com/api/v2/records/{id}", timeout=10)
-        if (resp.status_code == 200):
-            line_json = resp.json()
-            if line_json is None:
-                return None, None
-            id = line_json['id']
-            rec = {}
-            #TODO: Improve the method of getting props below
-            for prop in PROP_TO_GET:
-                if prop in line_json:
-                    rec[prop] = line_json[prop]
-            return id, rec
+        try:
+            resp = requests.get(f"https://kztimerglobal.com/api/v2/records/{id}", timeout=10)
+            if (resp.status_code == 200):
+                line_json = resp.json()
+                if line_json is None:
+                    return None, None
+                id = line_json['id']
+                rec = {}
+                #TODO: Improve the method of getting props below
+                for prop in PROP_TO_GET:
+                    if prop in line_json:
+                        rec[prop] = line_json[prop]
+                return id, rec
+        except TimeoutError:
+            pass
 
     logger.debug(f"Cannot get record from id {id}, status code {resp.status_code}, content {resp.json()}")
     return None, None
@@ -108,7 +111,7 @@ def main():
     
     parser.add_argument('url')
     parser.add_argument('index')
-    parser.add_argument('--version', action='version', version='0.0.5')
+    parser.add_argument('--version', action='version', version='0.0.6')
     parser.add_argument('--verbose', '-v')
     parser.add_argument('--timeout', type=int)
 
